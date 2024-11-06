@@ -19,6 +19,7 @@ class ChunkedUploader {
     required String fileName,
     required int fileSize,
     required String path,
+    DioMediaType? contentType,
     Map<String, dynamic>? data,
     CancelToken? cancelToken,
     int? maxChunkSize,
@@ -34,6 +35,7 @@ class ChunkedUploader {
         fileSize: fileSize,
         path: path,
         fileKey: fileKey,
+        contentType: contentType,
         method: method,
         data: data,
         cancelToken: cancelToken,
@@ -47,6 +49,7 @@ class ChunkedUploader {
     required String filePath,
     required String fileName,
     required String path,
+    DioMediaType? contentType,
     Map<String, dynamic>? data,
     CancelToken? cancelToken,
     int? maxChunkSize,
@@ -61,6 +64,7 @@ class ChunkedUploader {
         fileName: fileName,
         path: path,
         fileKey: fileKey,
+        contentType: contentType,
         method: method,
         data: data,
         cancelToken: cancelToken,
@@ -75,6 +79,7 @@ class _Uploader {
   late final int fileSize;
   late final ChunkedStreamReader<int> streamReader;
   final String fileName, path, fileKey;
+  final DioMediaType? contentType;
   final String? method;
   final Map<String, dynamic>? data;
   final CancelToken? cancelToken;
@@ -89,6 +94,7 @@ class _Uploader {
     required this.fileSize,
     required this.path,
     required this.fileKey,
+    this.contentType,
     this.method,
     this.data,
     this.cancelToken,
@@ -105,6 +111,7 @@ class _Uploader {
     required this.fileName,
     required this.path,
     required this.fileKey,
+    this.contentType,
     this.method,
     this.data,
     this.cancelToken,
@@ -124,9 +131,13 @@ class _Uploader {
       for (int i = 0; i < _chunksCount; i++) {
         final start = _getChunkStart(i);
         final end = _getChunkEnd(i);
-        final chunkStream = _getChunkStream();
         final formData = FormData.fromMap({
-          fileKey: MultipartFile(chunkStream, end - start, filename: fileName),
+          fileKey: MultipartFile.fromStream(
+            _getChunkStream,
+            end - start,
+            filename: fileName,
+            contentType: contentType,
+          ),
           if (data != null) ...data!
         });
         finalResponse = await dio.request(
